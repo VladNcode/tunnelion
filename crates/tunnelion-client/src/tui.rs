@@ -4,15 +4,15 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Cell, Paragraph, Row, Table};
-use ratatui::Frame;
 use tokio::sync::mpsc;
-use tokio::time::{interval, MissedTickBehavior};
+use tokio::time::{MissedTickBehavior, interval};
 
-use crate::dashboard::{format_bytes, ControlState, DashboardStats};
+use crate::dashboard::{ControlState, DashboardStats, format_bytes};
 
 pub async fn run_dashboard(stats: std::sync::Arc<DashboardStats>) -> Result<()> {
     let mut terminal = ratatui::try_init().context("terminal init")?;
@@ -115,18 +115,21 @@ fn render(frame: &mut Frame, stats: &DashboardStats) {
         } else {
             Style::new()
         };
-        rows.push(Row::new(vec![
-            Cell::from(t.name.clone()),
-            Cell::from(t.local_addr_display.clone()),
-            Cell::from(t.domain.clone()),
-            Cell::from(status),
-            Cell::from(format_bytes(
-                t.bytes_in.load(std::sync::atomic::Ordering::Relaxed),
-            )),
-            Cell::from(format_bytes(
-                t.bytes_out.load(std::sync::atomic::Ordering::Relaxed),
-            )),
-        ]).style(style));
+        rows.push(
+            Row::new(vec![
+                Cell::from(t.name.clone()),
+                Cell::from(t.local_addr_display.clone()),
+                Cell::from(t.domain.clone()),
+                Cell::from(status),
+                Cell::from(format_bytes(
+                    t.bytes_in.load(std::sync::atomic::Ordering::Relaxed),
+                )),
+                Cell::from(format_bytes(
+                    t.bytes_out.load(std::sync::atomic::Ordering::Relaxed),
+                )),
+            ])
+            .style(style),
+        );
     }
 
     let table = Table::new(rows, widths)
@@ -161,10 +164,7 @@ fn control_line(relay: &str, s: ControlState) -> Line<'static> {
     };
     Line::from(vec![
         Span::styled("relay ".to_string(), Style::new().fg(Color::DarkGray)),
-        Span::styled(
-            relay.to_string(),
-            Style::new().add_modifier(Modifier::BOLD),
-        ),
+        Span::styled(relay.to_string(), Style::new().add_modifier(Modifier::BOLD)),
         Span::raw(" · "),
         Span::styled(label.to_string(), Style::new().fg(color)),
     ])

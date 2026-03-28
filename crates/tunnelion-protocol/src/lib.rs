@@ -89,9 +89,7 @@ where
     let client_random: [u8; 32] = client_msg[MAGIC.len() + 2..MAGIC.len() + 2 + 32]
         .try_into()
         .unwrap();
-    let got_mac: [u8; 32] = client_msg[MAGIC.len() + 2 + 32..]
-        .try_into()
-        .unwrap();
+    let got_mac: [u8; 32] = client_msg[MAGIC.len() + 2 + 32..].try_into().unwrap();
     let expected = mac_client_proof(psk, &server_random, &client_random);
     if !bool::from(got_mac.ct_eq(&expected)) {
         return Err(ProtocolError::InvalidHandshake);

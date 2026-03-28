@@ -1,14 +1,14 @@
 //! VPS relay: PSK handshake, Yamux server, tunnel TCP listeners → outbound Yamux streams.
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use futures::future::poll_fn;
 use futures::io::{AsyncReadExt, AsyncWriteExt};
-use futures::{select, FutureExt};
+use futures::{FutureExt, select};
 use serde::Deserialize;
 use std::collections::{BTreeMap, HashSet};
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Instant;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast;
@@ -202,27 +202,17 @@ async fn run_one_yamux_session(
         let tunnel_name = t.name.clone();
         let shutdown_tx_loop = shutdown_tx.clone();
         accept_handles.push(tokio::spawn(async move {
-            tunnel_accept_loop(
-                listener,
-                conn,
-                tunnel_name,
-                shutdown_tx_loop,
-                shutdown_rx,
-            )
-            .await
+            tunnel_accept_loop(listener, conn, tunnel_name, shutdown_tx_loop, shutdown_rx).await
         }));
     }
 
-    let (driver_res, accepts_res) = tokio::join!(
-        driver,
-        async move {
-            let outs = futures::future::join_all(accept_handles).await;
-            for o in outs {
-                o.context("tunnel accept task join")??;
-            }
-            Ok::<(), anyhow::Error>(())
+    let (driver_res, accepts_res) = tokio::join!(driver, async move {
+        let outs = futures::future::join_all(accept_handles).await;
+        for o in outs {
+            o.context("tunnel accept task join")??;
         }
-    );
+        Ok::<(), anyhow::Error>(())
+    });
     driver_res.context("yamux driver task")?;
     accepts_res?;
     stopped.store(true, Ordering::SeqCst);
@@ -310,7 +300,12 @@ async fn drive_yamux_inbound(
         if stopped.load(Ordering::SeqCst) {
             break;
         }
-        let inbound = poll_fn(|cx| conn.lock().expect("yamux mutex poisoned").poll_next_inbound(cx)).await;
+        let inbound = poll_fn(|cx| {
+            conn.lock()
+                .expect("yamux mutex poisoned")
+                .poll_next_inbound(cx)
+        })
+        .await;
         match inbound {
             None => {
                 info!("yamux control closed (inbound none)");
@@ -333,12 +328,19 @@ async fn drive_yamux_inbound(
 }
 
 async fn open_outbound(conn: &Arc<std::sync::Mutex<YamuxConn>>) -> Result<yamux::Stream> {
-    poll_fn(|cx| conn.lock().expect("yamux mutex poisoned").poll_new_outbound(cx))
-        .await
-        .map_err(|e| anyhow!("{e}"))
+    poll_fn(|cx| {
+        conn.lock()
+            .expect("yamux mutex poisoned")
+            .poll_new_outbound(cx)
+    })
+    .await
+    .map_err(|e| anyhow!("{e}"))
 }
 
-async fn write_stream_header_on_futures(stream: &mut yamux::Stream, tunnel_name: &str) -> Result<()> {
+async fn write_stream_header_on_futures(
+    stream: &mut yamux::Stream,
+    tunnel_name: &str,
+) -> Result<()> {
     let buf = encode_stream_header(tunnel_name)?;
     stream.write_all(&buf).await.map_err(|e| anyhow!(e))?;
     stream.flush().await.map_err(|e| anyhow!(e))?;

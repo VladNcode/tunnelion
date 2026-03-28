@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use tunnelion_client::{parse_client_yaml, run_client, ClientConfig};
+use tunnelion_client::{ClientConfig, parse_client_yaml, run_client};
 use tunnelion_relay::{RelayConfig, TunnelListen, run_relay};
 
 /// Parallel public connections; keep modest so CI stays predictable.

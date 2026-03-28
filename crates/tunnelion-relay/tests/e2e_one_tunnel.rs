@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use tunnelion_client::{parse_client_yaml, run_client, ClientConfig};
+use tunnelion_client::{ClientConfig, parse_client_yaml, run_client};
 use tunnelion_relay::{RelayConfig, TunnelListen, run_relay};
 
 fn ephemeral_port() -> u16 {
@@ -24,9 +24,7 @@ async fn public_port_reaches_local_echo() {
     let psk = "e2e-test-psk";
 
     let echo_srv = tokio::spawn(async move {
-        let listener = TcpListener::bind(("127.0.0.1", echo_port))
-            .await
-            .unwrap();
+        let listener = TcpListener::bind(("127.0.0.1", echo_port)).await.unwrap();
         let (mut tcp, _) = listener.accept().await.unwrap();
         let mut buf = [0u8; 64];
         let n = tcp.read(&mut buf).await.unwrap();

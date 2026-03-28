@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use std::env;
 use std::path::PathBuf;
 use tracing_subscriber::EnvFilter;
-use tunnelion_client::{parse_client_yaml, run_client, run_client_with_tui, ClientConfig};
+use tunnelion_client::{ClientConfig, parse_client_yaml, run_client, run_client_with_tui};
 
 fn main() -> Result<()> {
     let headless = env::var("TUNNELION_HEADLESS").ok().as_deref() == Some("1");
@@ -25,8 +25,8 @@ fn main() -> Result<()> {
         .nth(1)
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("tunnels.yaml"));
-    let yaml = std::fs::read_to_string(&path)
-        .with_context(|| format!("read {}", path.display()))?;
+    let yaml =
+        std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
     let mut cfg: ClientConfig = parse_client_yaml(&yaml)?;
     let psk = env::var("TUNNELION_PSK").context("TUNNELION_PSK is required")?;
     cfg.psk = psk.into_bytes();

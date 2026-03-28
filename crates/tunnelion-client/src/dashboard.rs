@@ -1,7 +1,7 @@
 //! Shared atomic stats for the TUI (safe to read from the draw loop every tick).
 
-use std::sync::atomic::{AtomicU32, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU8, AtomicU32, AtomicU64, Ordering};
 
 use anyhow::Result;
 

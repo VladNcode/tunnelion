@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use std::path::Path;
 use tracing_subscriber::EnvFilter;
 use tunnelion_relay::{
-    parse_relay_yaml, relay_file_with_psk, RelayConfig, TunnelListen, run_relay,
+    RelayConfig, TunnelListen, parse_relay_yaml, relay_file_with_psk, run_relay,
 };
 
 fn load_config() -> Result<RelayConfig> {

@@ -4,20 +4,20 @@
 mod dashboard;
 mod tui;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use futures::future::poll_fn;
 use futures::io::{AsyncReadExt, AsyncWriteExt};
-use futures::{select, FutureExt};
+use futures::{FutureExt, select};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 use tokio::net::TcpStream;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 use tracing::{debug, error, info, warn};
-use tunnelion_protocol::{client_handshake, read_stream_header_futures, ProtocolError};
+use tunnelion_protocol::{ProtocolError, client_handshake, read_stream_header_futures};
 use yamux::{Config, Connection, Mode};
 
 pub use dashboard::{DashboardStats, TunnelRowStats};
@@ -66,7 +66,8 @@ pub fn parse_client_yaml(s: &str) -> Result<ClientConfig> {
 pub fn parse_local_socket(addr: &str) -> Result<SocketAddr> {
     let addr = addr.trim();
     if addr.contains(':') {
-        addr.parse().context("invalid addr (expected host:port or port)")
+        addr.parse()
+            .context("invalid addr (expected host:port or port)")
     } else {
         let port: u16 = addr.parse().context("invalid port")?;
         Ok(SocketAddr::from(([127, 0, 0, 1], port)))
@@ -233,17 +234,16 @@ async fn run_client_reconnect_loop(
                 backoff = INITIAL_BACKOFF;
             }
             Err(e) => {
-                if dash.is_none() {
-                    if let Some(hint) = stderr_hint_for_error(&e) {
-                        eprintln!("tunnelion-client: {hint}");
-                    }
+                if dash.is_none()
+                    && let Some(hint) = stderr_hint_for_error(&e)
+                {
+                    eprintln!("tunnelion-client: {hint}");
                 }
                 warn!(error = %e, retry_in = ?backoff, "session setup failed; retrying");
                 tokio::time::sleep(backoff).await;
                 let next_ms = backoff.as_millis().saturating_mul(2);
-                backoff = Duration::from_millis(
-                    (next_ms as u64).min(MAX_BACKOFF.as_millis() as u64),
-                );
+                backoff =
+                    Duration::from_millis((next_ms as u64).min(MAX_BACKOFF.as_millis() as u64));
             }
         }
     }
@@ -262,7 +262,12 @@ async fn drive_inbound_streams(
         if stopped.load(Ordering::SeqCst) {
             break;
         }
-        let inbound = poll_fn(|cx| conn.lock().expect("yamux mutex poisoned").poll_next_inbound(cx)).await;
+        let inbound = poll_fn(|cx| {
+            conn.lock()
+                .expect("yamux mutex poisoned")
+                .poll_next_inbound(cx)
+        })
+        .await;
         match inbound {
             None => {
                 info!("yamux session closed");
@@ -293,9 +298,7 @@ async fn drive_inbound_streams(
                         continue;
                     }
                 };
-                let row_stats = name_to_stats
-                    .as_ref()
-                    .and_then(|m| m.get(&name).cloned());
+                let row_stats = name_to_stats.as_ref().and_then(|m| m.get(&name).cloned());
                 let session = next_session_id();
                 info!(
                     session,
@@ -307,7 +310,10 @@ async fn drive_inbound_streams(
                     let local_tcp = match TcpStream::connect(local_addr).await {
                         Ok(t) => t,
                         Err(e) => {
-                            warn!(session, "client: upstream connect failed: {local_addr}: {e}");
+                            warn!(
+                                session,
+                                "client: upstream connect failed: {local_addr}: {e}"
+                            );
                             return;
                         }
                     };

@@ -65,7 +65,9 @@ async fn not_found() -> (StatusCode, &'static str) {
 #[tokio::main]
 async fn main() {
     let (port, name) = parse_args();
-    let app = App { name: Arc::clone(&name) };
+    let app = App {
+        name: Arc::clone(&name),
+    };
     let router = Router::new()
         .route("/api/time", get(api_time))
         .route("/api/slow", get(api_slow))
