@@ -1,0 +1,30 @@
+{
+  "name": "tunnelion-js",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Node.js tunnel: JSON config, WebSocket auth preface (TN3V1), binary tunnel frames — wire format independent of the Rust tunnelion binaries",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "fix": "prettier --write . && eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "relay": "node dist/bin/relay.js",
+    "client": "node dist/bin/client.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "neostandard": "^0.13.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.7.0"
+  }
+}
