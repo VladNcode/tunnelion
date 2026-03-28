@@ -1,0 +1,24 @@
+[package]
+name = "tunnelion-relay"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "tunnelion-relay"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+futures = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["compat"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tunnelion-protocol = { path = "../tunnelion-protocol" }
+yamux = "0.13.10"
+
+[dev-dependencies]
+tunnelion-client = { path = "../tunnelion-client" }

@@ -1,0 +1,16 @@
+[package]
+name = "tunnelion-demo-server"
+version.workspace = true
+edition = "2024"
+license.workspace = true
+description = "Minimal HTTP server for tunnelion local testing (/api/time, /api/slow)"
+
+[[bin]]
+name = "tunnelion-demo-server"
+path = "src/main.rs"
+
+[dependencies]
+axum = { version = "0.8", features = ["macros"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "time"] }

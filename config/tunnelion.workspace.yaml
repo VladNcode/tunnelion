@@ -1,0 +1,23 @@
+# Single source for relay + client + Caddy. Edit tunnel names, listen ports,
+# client upstreams, and public hostnames here; regenerate deploy artifacts.
+#
+#   cargo run -p tunnelion-config -- check config/tunnelion.workspace.yaml
+#   cargo run -p tunnelion-config -- emit all -i config/tunnelion.workspace.yaml \
+#       --relay-addr YOUR_VPS_IP:9780 -o ./config
+# (writes relay.yaml, tunnels.yaml, caddy-tunnelion.caddy under ./config)
+#
+# Copy emitted snippets to each machine (relay.yaml on VPS, tunnels.yaml on laptop,
+# Caddy include on VPS). PSK stays in the environment only.
+
+control:
+  addr: "0.0.0.0:9780"
+
+tunnels:
+  app:
+    listen: "127.0.0.1:18001"
+    client_addr: "9001"
+    host: "app.example.com"
+  api:
+    listen: "127.0.0.1:18002"
+    client_addr: "9002"
+    host: "api.example.com"

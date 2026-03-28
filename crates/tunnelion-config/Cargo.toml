@@ -1,0 +1,16 @@
+[package]
+name = "tunnelion-config"
+version.workspace = true
+edition = "2024"
+license.workspace = true
+description = "Emit relay.yaml, tunnels.yaml, and Caddy from one workspace file"
+
+[[bin]]
+name = "tunnelion-config"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
