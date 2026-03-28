@@ -33,8 +33,17 @@ Mixing these up (pointing the client at a tunnel listen port, or Caddy at the co
 ## Secrets and naming
 
 - **`TUNNELION_PSK`** must be the **same** on relay and client. It is **not** stored in YAML; treat it like any other deploy secret.
+- **Generate a strong PSK** (do not reuse passwords): e.g. `openssl rand -hex 32`, then set the same value in the environment on relay and client.
 - **Tunnel names** (the keys under `tunnels:`) must match **exactly** between `relay.yaml` and `tunnels.yaml`. A typo shows up as “unknown tunnel” on the client.
 - **Public hostnames** (TLS, browser) must match what you configure in Caddy. Those names do not have to match tunnel keys, but your mental model is easier if you keep a table: hostname → tunnel name → listen port → local `addr`.
+
+---
+
+## Security and trust model
+
+- The PSK handshake **authenticates** the relay and client. **Application bytes after the handshake are not encrypted** on the control TCP connection (Yamux carries plaintext). Anyone who can **observe** that link sees the tunneled traffic.
+- Treat the path between relay and client like a **private link**: VPN, SSH tunnel, localhost-only, or a network you trust. For sensitive workloads over the public Internet, **wrap the control connection** (for example SSH `-L` / `-R`, or WireGuard) or accept the confidentiality risk.
+- **`relay.yaml`** often sets `control.addr` to `0.0.0.0:…` on the VPS so a remote client can connect. **Firewall** the control port to known client IPs (or rely on VPN) in addition to the PSK.
 
 ---
 

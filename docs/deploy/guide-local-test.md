@@ -14,7 +14,7 @@ Overview: [README](../../README.md) in the repo root.
 | Local app upstream    | **9001**  | e.g. `tunnelion-demo-server`      |
 | Local api upstream    | **9002**  | second `tunnelion-demo-server`    |
 
-Flow: `curl 127.0.0.1:18001` → relay → Yamux stream `app` → client → `127.0.0.1:9101`.
+Flow: `curl 127.0.0.1:18001` → relay → Yamux stream `app` → client → `127.0.0.1:9001`.
 
 ## Upstream (optional)
 

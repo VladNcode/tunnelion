@@ -1,12 +1,8 @@
 use anyhow::{Context, Result};
 use std::env;
 use std::fs;
-use std::net::SocketAddr;
-use std::path::Path;
 use tracing_subscriber::EnvFilter;
-use tunnelion_relay::{
-    RelayConfig, TunnelListen, parse_relay_yaml, relay_file_with_psk, run_relay,
-};
+use tunnelion_relay::{RelayConfig, parse_relay_yaml, relay_file_with_psk, run_relay};
 
 fn load_config() -> Result<RelayConfig> {
     let psk = env::var("TUNNELION_PSK")
@@ -14,34 +10,11 @@ fn load_config() -> Result<RelayConfig> {
         .into_bytes();
 
     let path = env::var("TUNNELION_RELAY_CONFIG").unwrap_or_else(|_| "relay.yaml".into());
-
-    if Path::new(&path).try_exists().context("relay config path")? {
-        let s = fs::read_to_string(&path).with_context(|| format!("read {path}"))?;
-        let file = parse_relay_yaml(&s).with_context(|| format!("parse {path}"))?;
-        return Ok(relay_file_with_psk(file, psk));
-    }
-
-    // Back-compat: single tunnel from env when relay.yaml is missing
-    let control_listen: SocketAddr = env::var("TUNNELION_CONTROL_ADDR")
-        .unwrap_or_else(|_| "0.0.0.0:9780".into())
-        .parse()
-        .context("TUNNELION_CONTROL_ADDR")?;
-    let tunnel_name = env::var("TUNNELION_TUNNEL_NAME").context(
-        "TUNNELION_TUNNEL_NAME is required when relay.yaml is missing (or create relay.yaml)",
-    )?;
-    let tunnel_listen: SocketAddr = env::var("TUNNELION_TUNNEL_LISTEN")
-        .unwrap_or_else(|_| "127.0.0.1:18001".into())
-        .parse()
-        .context("TUNNELION_TUNNEL_LISTEN")?;
-
-    Ok(RelayConfig {
-        control_listen,
-        psk,
-        tunnels: vec![TunnelListen {
-            name: tunnel_name,
-            listen: tunnel_listen,
-        }],
-    })
+    let s = fs::read_to_string(&path).with_context(|| {
+        format!("read relay config from {path} (create relay.yaml or set TUNNELION_RELAY_CONFIG)")
+    })?;
+    let file = parse_relay_yaml(&s).with_context(|| format!("parse {path}"))?;
+    Ok(relay_file_with_psk(file, psk))
 }
 
 fn main() -> Result<()> {

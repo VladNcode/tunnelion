@@ -4,6 +4,12 @@
 
 **Local multi-tunnel test (no VPS):** [guide-local-test.md](guide-local-test.md)
 
+### Trust model, PSK, and control bind
+
+- The PSK proves both ends know the secret; **traffic on the control TCP connection is not encrypted** by tunnelion. Use a **private path** (VPN, SSH tunnel, trusted LAN) or wrap the TCP session if you need confidentiality on the wire.
+- **PSK:** use a long random value, not a reused password. Example: `export TUNNELION_PSK="$(openssl rand -hex 32)"` (run once, copy the value to relay and client environments).
+- **`relay.yaml`** often uses `control.addr: 0.0.0.0:9780` on the VPS so clients can reach the relay. **Firewall** that TCP port (allow only your client or VPN egress) in addition to keeping the PSK secret.
+
 ---
 
 ## 1. Build
@@ -42,16 +48,19 @@ To print one file to stdout (scripts): `emit relay`, `emit client --relay-addr �
 
 ### B. By hand
 
-- VPS: `deploy/relay.yaml.example` → `relay.yaml` (control + per-tunnel `listen`).
-- Client: `tunnels.yaml` with `relay.addr` = **`VPS:control_port`** (not the HTTP tunnel ports) and the same tunnel **keys** as relay.
+- VPS: create **`relay.yaml`** with `control.addr` and per-tunnel `listen` entries (see **`config/relay.yaml`** in this repo for shape).
+- Client: **`tunnels.yaml`** with `relay.addr` = **`VPS:control_port`** (not the HTTP tunnel ports) and the same tunnel **keys** as relay.
 
 ---
 
 ## 3. Relay (VPS)
 
+The relay **always** reads **`relay.yaml`** (default filename in the current working directory). Use **`TUNNELION_RELAY_CONFIG`** if the file lives elsewhere.
+
 ```bash
 export TUNNELION_PSK='your-secret'
-# optional: export TUNNELION_RELAY_CONFIG=/path/to/relay.yaml
+cd /path/to/dir/with/relay.yaml   # default file name: relay.yaml in cwd
+# or: export TUNNELION_RELAY_CONFIG=/absolute/path/to/relay.yaml
 ./tunnelion-relay
 ```
 
@@ -72,7 +81,7 @@ export TUNNELION_PSK='your-secret'
 ## 5. HTTPS on the VPS
 
 1. DNS → VPS IP.
-2. Caddy terminates TLS; each site `reverse_proxy`s to the **tunnel listen** from `relay.yaml` (see `deploy/Caddyfile.example` or generated Caddy snippet).
+2. Caddy terminates TLS; each site `reverse_proxy`s to the **tunnel listen** from `relay.yaml` (see **`config/caddy-tunnelion.caddy`** in this repo, or your generated snippet from **`tunnelion-config emit caddy`**).
 3. Do not terminate TLS on the tunnelion **control** port unless you know why.
 
 More: [README](../../README.md) in the repo root.
@@ -91,4 +100,4 @@ More: [README](../../README.md) in the repo root.
 
 ## systemd (relay on VPS)
 
-See `deploy/tunnelion-relay.service` — adjust user, paths, and `relay.env` for `TUNNELION_PSK`.
+Use a unit that sets **`WorkingDirectory`** to the folder containing **`relay.yaml`** (or set **`Environment=TUNNELION_RELAY_CONFIG=...`**), and load **`TUNNELION_PSK`** from an **`EnvironmentFile`** (mode `0600`). There is no checked-in sample service file in this repo.

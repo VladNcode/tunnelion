@@ -8,6 +8,9 @@
 #
 # Copy emitted snippets to each machine (relay.yaml on VPS, tunnels.yaml on laptop,
 # Caddy include on VPS). PSK stays in the environment only.
+#
+# control.addr 0.0.0.0 = listen on all interfaces (typical VPS). Restrict this port
+# with a firewall (or VPN); tunnelion does not encrypt bytes on this TCP session.
 
 control:
   addr: "0.0.0.0:9780"
