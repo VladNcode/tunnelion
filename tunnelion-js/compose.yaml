@@ -1,0 +1,32 @@
+# Demo: relay + client. Requires TUNNELION_SECRET (export or .env).
+# Optional: RELAY_CONFIG and TUNNELS_CONFIG = host paths to JSON (defaults under ./config/).
+# Usage: docker compose up --build
+
+services:
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: relay
+    environment:
+      TUNNELION_SECRET: ${TUNNELION_SECRET:?set TUNNELION_SECRET in the environment or .env}
+    volumes:
+      - ${RELAY_CONFIG:-./config/docker.relay.json}:/app/relay.json:ro
+    ports:
+      - '9780:9780'
+      - '18001:18001'
+      - '18002:18002'
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client
+    environment:
+      TUNNELION_SECRET: ${TUNNELION_SECRET:?set TUNNELION_SECRET in the environment or .env}
+    volumes:
+      - ${TUNNELS_CONFIG:-./config/docker.tunnels.json}:/app/tunnels.json:ro
+    depends_on:
+      - relay
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'

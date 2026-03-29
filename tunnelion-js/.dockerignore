@@ -1,0 +1,27 @@
+# Dependencies and build output
+node_modules
+dist
+
+# Version control and editors
+.git
+.gitignore
+.cursor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Tests and coverage (if added later)
+coverage
+.nyc_output
+
+# Docs not needed for build
+*.md
+
+# Local env (never bake secrets)
+.env
+.env.*
+
+# OS junk
+.DS_Store
+Thumbs.db

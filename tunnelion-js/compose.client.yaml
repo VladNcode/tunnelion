@@ -1,0 +1,19 @@
+# Client-only: set relay.url in tunnels.json (e.g. ws://your-vps:9780 or wss://…).
+# If upstreams run on the Docker host, use host.docker.internal in tunnels.json (Linux needs extra_hosts below).
+# Usage: export TUNNELION_SECRET='…' && docker compose -f compose.client.yaml up -d --build
+# Optional: TUNNELS_CONFIG=/path/to/tunnels.json (default ./config/docker.tunnels.json)
+
+services:
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client
+    image: tunnelion-js-client
+    restart: unless-stopped
+    environment:
+      TUNNELION_SECRET: ${TUNNELION_SECRET:?set TUNNELION_SECRET}
+    volumes:
+      - ${TUNNELS_CONFIG:-./config/docker.tunnels.json}:/app/tunnels.json:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'

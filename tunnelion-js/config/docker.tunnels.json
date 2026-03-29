@@ -1,0 +1,7 @@
+{
+  "relay": { "url": "ws://relay:9780" },
+  "tunnels": {
+    "app": { "upstream": "host.docker.internal:9001" },
+    "api": { "upstream": "host.docker.internal:9002" }
+  }
+}

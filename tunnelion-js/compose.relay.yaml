@@ -1,0 +1,20 @@
+# Relay-only. Keep `ports` in sync with control.port and each tunnel listen port in relay.json.
+# Usage: export TUNNELION_SECRET='…' && docker compose -f compose.relay.yaml up -d --build
+# Optional: RELAY_CONFIG=/absolute/or/relative/path/to/relay.json (default ./config/docker.relay.json)
+
+services:
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: relay
+    image: tunnelion-js-relay
+    restart: unless-stopped
+    environment:
+      TUNNELION_SECRET: ${TUNNELION_SECRET:?set TUNNELION_SECRET}
+    volumes:
+      - ${RELAY_CONFIG:-./config/docker.relay.json}:/app/relay.json:ro
+    ports:
+      - '9780:9780'
+      - '18001:18001'
+      - '18002:18002'
